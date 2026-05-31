@@ -1,0 +1,37 @@
+#include <LiquidCrystal_I2C.h>
+// Include LCD display Library
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+// Configure LCD with the address, columns and rows
+
+const float R1 = 90000.0;
+const float R2 = 10000.0;
+//Create variables for resistor values
+
+void setup() {
+  lcd.init();
+  lcd.backlight();
+  //Turn on the LCD Pannel
+}
+
+void loop() {
+  int adc = analogRead(A0);
+  //Read the voltage between the two resistors as a digital value
+
+  float v_measured = (adc * 5.0) / 1023.0;
+  // Convert digital value to Volts
+  float v_actual = v_measured * (R1 + R2) / R2;
+  //Convert the measure voltage from 0-5V to actual value 0-50V
+
+  lcd.setCursor(0, 0);
+  lcd.print("Voltage:       ");
+  //Print Voltage message to display
+
+  lcd.setCursor(0, 1);
+  lcd.print(v_actual, 3);
+  lcd.print(" V   ");
+  // Print the true voltage and units to LCD
+
+  delay(200);
+  //Repeat every 0.2 seconds
+}
