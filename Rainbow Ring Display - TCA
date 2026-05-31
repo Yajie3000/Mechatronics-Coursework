@@ -1,0 +1,98 @@
+#include <Adafruit_NeoPixel.h>
+// include the neopixel ring LED library to access its functions
+#define LED_PIN 6
+#define BUTTON_PIN 2
+// define LED ring pin at pin 6 and button pin at pin 2
+#define NUM_LEDS 24
+//set the amount of LEDs in the ring to 24
+
+Adafruit_NeoPixel ring(NUM_LEDS, LED_PIN, NEO_GRB + NEO_KHZ800);
+//Create an object (ring) to define the properties of the LED ring
+//It stores the number of leds, the pin number, the colour mode and frequency
+
+int mode = 0;
+//stores the current display mode
+bool lastButton = HIGH;
+//stores the previous button state
+unsigned long lastDebounce = 0;
+//stores timestamp of last button press
+
+unsigned long lastUpdate = 0;
+// stores the last time the LEDs were updtated
+uint16_t rainbowOffset = 0;
+//Stores the hue offset to animate the rainbow
+
+void setup() {
+  ring.begin();
+  ring.show();
+  //Starts up the neopixel ring
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  //Makes the button register as input with an internal pull up resistor
+}
+
+void loop() {
+  handleButton();
+// Checks for button press from function 
+  switch (mode) {
+    case 0: rainbowCycleNB(20); break;
+    case 1: rainbowFadeNB(20); break;
+    //Changes the animation function called depending on button push
+  }
+}
+
+void handleButton() {
+  //Create a function to manage the button
+  
+  bool reading = digitalRead(BUTTON_PIN);
+  //Read the button pin data
+
+  if (reading == LOW && lastButton == HIGH && millis() - lastDebounce > 250) {
+    //If the button is pressed and it previously wasnt and 250ms has elapsed since last press then it is a valid press
+    mode++;
+    //Add 1 to the mode variable
+    if (mode > 1) mode = 0;
+    //if the mode value is greater than 1 then reset to 0
+    lastDebounce = millis();
+    //store the time of the button push
+  }
+
+  lastButton = reading;
+  //store the button push state
+}
+
+void rainbowCycleNB(uint8_t speed) {
+  // Create a function for the first mode with a speed variable
+  //the speed is so that the system knows how long to wait between updates
+  if (millis() - lastUpdate < speed) return;
+  //if the time since boot - the last update time is less than the speed then exit
+  lastUpdate = millis();
+  //update the lastUpdate timestamp
+
+  for (int i = 0; i < NUM_LEDS; i++) {
+    // loop through the LEDs in the ring up to 23
+    ring.setPixelColor(i, ring.ColorHSV((i * 65536L / NUM_LEDS) + rainbowOffset));
+  //Each LED asigned an individual hue number which is converted to an RGB value and is shifted by the offset
+  }
+  ring.show();
+  //send the updated colour information to the ring
+
+  rainbowOffset += 256; // Incriments the hue value so the LEDS change continuously
+}
+
+void rainbowFadeNB(uint8_t speed) {
+   // Create a function for the second mode with a speed variable
+  //the speed is so that the system knows how long to wait between updates
+  if (millis() - lastUpdate < speed) return;
+  lastUpdate = millis();
+  // same time update as previous
+
+  for (int i = 0; i < NUM_LEDS; i++) {
+    // loop through the LEDs in the ring up to 23
+    ring.setPixelColor(i, ring.ColorHSV(rainbowOffset));
+    //Every LED has the same hue and shifts through the colours slowly
+  }
+  ring.show();
+  //Send the updated colour info to the ring
+
+  rainbowOffset += 256; //Incriment the hue value
+}
