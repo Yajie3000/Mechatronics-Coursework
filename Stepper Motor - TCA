@@ -1,0 +1,65 @@
+#include <LiquidCrystal_I2C.h> //Include LCD I2C Display Library
+#include <Stepper.h> //Incude stepper motor library for 28BYJ-48 model stepper motor
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+// Configure LCD with the address, columns and rows
+
+const int stepsPerRev = 2048; //Motor requires 2048 steps to complete 1 revolution
+Stepper stepper(stepsPerRev, 8, 10, 9, 11);
+//Create the stepper motor object, where the ULN2003 driver is connected to pins 8-11 on the arduino
+
+const int potPin = A0; // Define the potentiometer pin to A0
+const int buttonPin = 2; // Define the Button pin to 2
+
+bool lastButton = HIGH; //Stores the last state of the button for edge detection
+bool direction = true; //Stores the current direction of the motor - CW/CCW
+
+void setup() {
+  pinMode(buttonPin, INPUT_PULLUP);
+  // Enables the button in input mode with internal pull-up resistor
+  lcd.init();
+  lcd.backlight();
+    //Turn on the LCD Pannel
+  lcd.clear(); // Clear any Characters on the screen
+  lcd.setCursor(0,0);
+  lcd.print("Stepper Dash");
+  delay(800); // Display Start up message for 0.8s
+  lcd.clear(); // Clear the display
+}
+
+void loop() {
+
+  int pot = analogRead(potPin); // Read the current position and digital voltage of the potentiometer
+  int rpm = map(pot, 0, 1023, 1, 15); // Map the value from the pot to the RPM of the motor 1-15
+  stepper.setSpeed(rpm); // Outputs the selected speed to the motor
+
+
+  bool b = digitalRead(buttonPin); // Read the current button state
+  if (lastButton == HIGH && b == LOW) { // Checks to ensure the button is pushed
+    direction = !direction; // If button is pushed change the direction value true/false
+  }
+  lastButton = b; // Log the last button state
+
+
+  stepper.step(direction ? 10 : -10);
+  //If direction = true rotate clockwise, if false rotate counter clockwise
+
+
+  lcd.setCursor(0,0);
+  lcd.print("RPM:");
+  //Print 'RPM' message in the top left of LCD
+  lcd.print(rpm);
+  lcd.print("  ");
+  //Print actual RPM value
+
+  lcd.setCursor(10,0);
+  lcd.print(direction ? "CW " : "CCW");
+  //Print the direction the motor is currently moving in the top right of LCD
+
+
+  int bars = map(rpm, 1, 15, 1, 10); // Map the RPM to number of speed bars displayed
+  lcd.setCursor(0,1);// set cursor to bottom left
+  for (int i=0; i<bars; i++) lcd.print(">");
+  for (int i=bars; i<10; i++) lcd.print(" ");
+  //Print a single bar as the speed increases, maximum 10 bars for full 15 RPM
+}
