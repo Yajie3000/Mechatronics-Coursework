@@ -1,0 +1,72 @@
+#include <LiquidCrystal_I2C.h>
+// Include LCD display Library
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+// Configure LCD with the address, columns and rows
+
+const int trigPin = 9;
+//Map sensor trigger to pin 9
+const int echoPin = 10;
+//Map sensor reciever to pin 10
+
+float filteredDistance = 0;
+//holds the filtered distance value
+
+const float speedOfSound = 0.03448; 
+// set a constant for the speed of sound
+
+const float manualAdjustment = -0.3; 
+// set a constant offset to ensure the measurement is calibrated
+
+float readDistance() {
+  //Start the function to read distance
+  digitalWrite(trigPin, LOW);
+  //Start the trigger pulse low
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  //send a high trigger pulse for 10microseconds
+  digitalWrite(trigPin, LOW);
+  //turn the pulse off
+
+  long duration = pulseIn(echoPin, HIGH);
+  //wait for the echo pin to go high and log the time when it does
+  
+  return (duration * speedOfSound / 2) + manualAdjustment;
+  //Calculate distance using half of the full cycle and the manual calibration
+  // return the distance to the main program
+}
+
+void setup() {
+  lcd.init();
+  lcd.backlight();
+  //Turn on the LCD Pannel
+
+  pinMode(trigPin, OUTPUT);
+  //set the trigger pin to be an output device
+  pinMode(echoPin, INPUT);
+  //set echo pin to be an input device
+
+  filteredDistance = readDistance();
+  // Acquire the distance value from the fucntion
+
+  lcd.setCursor(0, 0);
+  lcd.print("Distance:");
+  //Print 'Distance' message to display
+}
+
+void loop() {
+  float raw = readDistance();
+  // Read in the raw data from the distance function
+
+  filteredDistance = (filteredDistance * 0.8) + (raw * 0.2);
+  // Filters the distance by taking 80% of the previous reading and adding 20% of the new reading
+
+  lcd.setCursor(0, 1);
+  lcd.print(filteredDistance, 1); 
+  lcd.print(" cm     "); 
+  //Displays the final distance reading to update the display
+
+  delay(100);
+  //repeat every 0.1s
+}
