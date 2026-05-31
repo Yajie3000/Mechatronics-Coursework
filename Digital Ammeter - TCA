@@ -1,0 +1,40 @@
+#include <LiquidCrystal_I2C.h>
+// Include LCD I2C Library
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+// Configure LCD with the address, columns and rows
+
+const float R_SHUNT = 1.0;
+// Set value of shunt ressistor to 1ohm
+
+void setup() {
+  lcd.init();
+  lcd.backlight();
+  //Turn on the LCD Pannel
+}
+
+void loop() {
+  int adc = analogRead(A0);
+  // Read digital voltage level at the midpoint of resistors
+
+  float v_shunt = (adc * 5.0) / 1023.0;
+  // Convert digital value across shunt resistor to Volts
+
+  float currentA = v_shunt / R_SHUNT;
+  //Calculate current across shunt resistor using I=V/R in amps
+
+  float currentmA = currentA * 1000.0;
+  //convert from amps to milliamps
+
+  lcd.setCursor(0, 0);
+  lcd.print("Current:       ");
+  //Print 'Current' message to display
+
+  lcd.setCursor(0, 1);
+  lcd.print(currentmA, 2);   // e.g. 1.07 mA
+  lcd.print(" mA  ");
+  //display current reading on the display
+
+  delay(200);
+  //repeat every 0.2s
+}
